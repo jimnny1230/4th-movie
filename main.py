@@ -216,4 +216,31 @@ with st.container():
 
 st.divider()
 
+# ---------------------------------------------------------------
+# 구역 7. 제작 국가 → 장르 (선버스트, 칸 크기 = 영화 편수)
+# ---------------------------------------------------------------
+with st.container():
+    st.header("7. 제작 국가에서 장르로 (선버스트)")
+
+    sun_df = df.copy()
+    sun_df["nation"] = sun_df["nation"].fillna("미상").astype(str).str.strip()
+    nation_genre = sun_df.groupby(["nation", "genre"]).size().reset_index(name="편수")
+
+    fig7 = px.sunburst(
+        nation_genre,
+        path=["nation", "genre"],
+        values="편수",
+    )
+    fig7.update_traces(
+        hovertemplate="%{label}<br>편수: %{value}편<extra></extra>",
+    )
+    fig7.update_layout(margin=dict(t=30, l=10, r=10, b=10), height=650)
+    st.plotly_chart(fig7, use_container_width=True)
+    st.caption("안쪽 고리는 제작 국가, 바깥쪽 고리는 그 나라 영화의 장르예요. 칸이 클수록 영화 편수가 많아요.")
+
+    INSIGHT_7 = ""  # 예: "○○ 영화가 가장 많고, 그중 ○○ 장르 비중이 크다."
+    insight_box(INSIGHT_7)
+
+st.divider()
+
 # 다음 그래프는 위와 같은 형식으로 아래에 구역을 추가하면 돼요.
