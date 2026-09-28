@@ -343,4 +343,90 @@ with st.container():
 
 st.divider()
 
+# ---------------------------------------------------------------
+# 구역 8. 월별로 어느 장르의 영화가 많이 개봉했나 (누적 막대, 조각 하나 = 영화 한 편)
+# ---------------------------------------------------------------
+MONTHS = [f"{m}월" for m in range(1, 13)]
+month_df = df.dropna(subset=["openDt"]).copy()
+month_df["month"] = month_df["openDt"].dt.month
+month_df["개봉월"] = month_df["month"].map(lambda m: f"{m}월")
+
+with st.container():
+    st.header("8. 월별 장르별 영화 편수 (누적 막대)")
+
+    bar_df = month_df.assign(편수=1)
+    fig8 = px.bar(
+        bar_df,
+        x="개봉월",
+        y="편수",
+        color="genre",
+        hover_name="movieNm",  # 조각(영화)에 올리면 영화명이 보임
+        hover_data={"개봉월": False, "편수": False, "genre": True},
+        category_orders={"개봉월": MONTHS},
+        labels={"genre": "장르", "편수": "영화 편수(편)"},
+    )
+    fig8.update_traces(marker_line_color="white", marker_line_width=1)
+    fig8.update_layout(yaxis_title="영화 편수(편)")
+    st.plotly_chart(fig8, use_container_width=True)
+    st.caption("막대 안의 조각 하나가 영화 한 편이에요. 조각에 마우스를 올리면 영화명이 보여요.")
+
+    INSIGHT_8 = ""  # 예: "○월에는 ○○ 장르 영화가 가장 많이 개봉했다."
+    insight_box(INSIGHT_8)
+
+st.divider()
+
+# ---------------------------------------------------------------
+# 구역 9. 월별로 인기 있는 장르 (버블 그래프, 크기 = 그 달·장르의 총 관객 합계)
+# ---------------------------------------------------------------
+with st.container():
+    st.header("9. 월별 장르별 관객수 (버블 그래프)")
+
+    rows = []
+    for (m, genre), g in month_df.dropna(subset=["total_audi"]).groupby(["month", "genre"]):
+        g = g.sort_values("total_audi", ascending=False)
+        names = list(g["movieNm"])
+        shown = "<br>".join(names[:5])
+        if len(names) > 5:
+            shown += f"<br>… 외 {len(names) - 5}편"
+        rows.append(
+            {
+                "month": m,
+                "genre": genre,
+                "총관객": g["total_audi"].sum(),
+                "편수": len(g),
+                "영화": shown,
+            }
+        )
+    pop_df = pd.DataFrame(rows)
+    pop_df["개봉월"] = pop_df["month"].map(lambda m: f"{m}월")
+
+    fig9 = px.scatter(
+        pop_df,
+        x="개봉월",
+        y="genre",
+        size="총관객",
+        color="genre",
+        size_max=45,
+        custom_data=["개봉월", "총관객", "편수", "영화"],
+        category_orders={"개봉월": MONTHS},
+        labels={"genre": "장르"},
+    )
+    fig9.update_traces(
+        hovertemplate=(
+            "<b>%{customdata[0]} · %{y}</b><br>"
+            "총 관객 합계: %{customdata[1]:,}명<br>"
+            "영화 %{customdata[2]}편<br>"
+            "%{customdata[3]}<extra></extra>"
+        ),
+        marker=dict(opacity=0.75, line=dict(width=0.5, color="white")),
+    )
+    fig9.update_layout(showlegend=False, xaxis_title="개봉월", yaxis_title="장르")
+    st.plotly_chart(fig9, use_container_width=True)
+    st.caption("버블이 클수록 그 달에 개봉한 그 장르 영화들의 총 관객 합계가 커요. 버블에 올리면 영화명(관객 많은 순 5편)이 보여요.")
+
+    INSIGHT_9 = ""  # 예: "○월에는 ○○ 장르의 관객수가 가장 많았다."
+    insight_box(INSIGHT_9)
+
+st.divider()
+
 # 다음 그래프는 위와 같은 형식으로 아래에 구역을 추가하면 돼요.
