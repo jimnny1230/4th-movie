@@ -61,4 +61,28 @@ with st.container():
 
 st.divider()
 
+# ---------------------------------------------------------------
+# 구역 2. 장르 안의 영화별 총 관객 (트리맵)
+# ---------------------------------------------------------------
+with st.container():
+    st.header("2. 장르별 영화 총 관객 트리맵")
+
+    tree_df = df.dropna(subset=["total_audi"])
+    fig2 = px.treemap(
+        tree_df,
+        path=[px.Constant("전체"), "genre", "movieNm"],
+        values="total_audi",
+    )
+    fig2.update_traces(
+        hovertemplate="%{label}<br>총 관객: %{value:,}명<extra></extra>",
+        textinfo="label",
+    )
+    fig2.update_layout(margin=dict(t=30, l=10, r=10, b=10))
+    st.plotly_chart(fig2, use_container_width=True)
+
+    INSIGHT_2 = ""  # 예: "○○ 장르에서 총 관객이 가장 큰 영화는 ○○이다."
+    insight_box(INSIGHT_2)
+
+st.divider()
+
 # 다음 그래프는 위와 같은 형식으로 아래에 구역을 추가하면 돼요.
