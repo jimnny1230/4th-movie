@@ -146,4 +146,74 @@ with st.container():
 
 st.divider()
 
+# ---------------------------------------------------------------
+# 구역 5. 장르별 총 관객 상자 그림 (영화 10편 이상인 장르만)
+# ---------------------------------------------------------------
+with st.container():
+    st.header("5. 장르별 총 관객 상자 그림")
+
+    genre_size = df["genre"].value_counts()
+    big_genres = genre_size[genre_size >= 10].index.tolist()
+
+    if big_genres:
+        box_df = df[df["genre"].isin(big_genres)].dropna(subset=["total_audi"])
+        fig5 = px.box(
+            box_df,
+            x="genre",
+            y="total_audi",
+            color="genre",
+            points="outliers",  # 상자 밖으로 튀는 점만 표시
+            hover_name="movieNm",
+            hover_data={"genre": False, "total_audi": ":,"},
+            category_orders={"genre": big_genres},
+            labels={"genre": "장르", "total_audi": "총 관객(명)"},
+        )
+        fig5.update_layout(showlegend=False)
+        st.plotly_chart(fig5, use_container_width=True)
+        st.caption("영화가 10편 이상인 장르만 보여요: " + ", ".join(big_genres))
+    else:
+        st.warning("영화가 10편 이상인 장르가 없어요.")
+
+    INSIGHT_5 = ""  # 예: "○○ 장르는 상자가 넓어 영화마다 관객 수 차이가 크다."
+    insight_box(INSIGHT_5)
+
+st.divider()
+
+# ---------------------------------------------------------------
+# 구역 6. 개봉일 스크린수와 총 관객 (버블 그래프: 점 크기 = 첫 주 관객)
+# ---------------------------------------------------------------
+with st.container():
+    st.header("6. 스크린수와 총 관객, 첫 주 관객까지 (버블 그래프)")
+
+    bubble_df = df.dropna(subset=["first_scrn", "total_audi", "first_week_audi"])
+    fig6 = px.scatter(
+        bubble_df,
+        x="first_scrn",
+        y="total_audi",
+        size="first_week_audi",
+        color="genre",
+        size_max=40,
+        hover_name="movieNm",
+        hover_data={
+            "genre": True,
+            "first_scrn": ":,",
+            "total_audi": ":,",
+            "first_week_audi": ":,",
+        },
+        labels={
+            "first_scrn": "개봉일 스크린수(개)",
+            "total_audi": "총 관객(명)",
+            "first_week_audi": "개봉 첫 주 관객(명)",
+            "genre": "장르",
+        },
+    )
+    fig6.update_traces(marker=dict(opacity=0.7, line=dict(width=0.5, color="white")))
+    st.plotly_chart(fig6, use_container_width=True)
+    st.caption("점(버블)이 클수록 개봉 첫 주 관객이 많아요.")
+
+    INSIGHT_6 = ""  # 예: "첫 주 관객이 많은 영화(큰 버블)일수록 총 관객도 많은 편이다."
+    insight_box(INSIGHT_6)
+
+st.divider()
+
 # 다음 그래프는 위와 같은 형식으로 아래에 구역을 추가하면 돼요.
